@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Smart Mobile Price Predictor</title>
+<style>
+:root{
+  --green:#064E3B;--green2:#0B6B50;--deep:#043C2E;
+  --cream:#F8E7C9;--bg:#FFF8EC;--card:#fff;--text:#10231D;
+  --muted:#66756E;--border:#DCE5DF;
+}
+[data-theme="dark"]{--bg:#081A15;--card:#0F2A22;--text:#F8E7C9;--muted:#A3B5AB;--border:#214238}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+button{font:inherit}
+.wrap{max-width:1050px;margin:auto;padding:22px 16px 50px}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px}
+.logo{font-size:1.15rem;font-weight:800;color:var(--green2)}
+[data-theme="dark"] .logo{color:var(--cream)}
+.theme{border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:12px;padding:9px 12px;cursor:pointer}
+.hero{text-align:center;margin:25px auto 30px;max-width:720px}
+.badge{display:inline-block;background:var(--cream);color:var(--green);padding:6px 12px;border-radius:99px;font-size:.78rem;font-weight:700;margin-bottom:12px}
+.hero h1{font-size:clamp(2rem,6vw,3.4rem);line-height:1.05;margin:0 0 12px;color:var(--green)}
+[data-theme="dark"] .hero h1{color:var(--cream)}
+.hero p{color:var(--muted);margin:0}
+.layout{display:grid;grid-template-columns:1.15fr .85fr;gap:18px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:22px;box-shadow:0 8px 30px rgba(6,78,59,.08)}
+.card h2{margin:0 0 5px;font-size:1.25rem}
+.sub{margin:0 0 20px;color:var(--muted);font-size:.9rem}
+.group{margin:20px 0}
+.group label{display:block;font-size:.85rem;font-weight:750;margin-bottom:9px}
+.options{display:flex;flex-wrap:wrap;gap:8px}
+.opt{border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:12px;padding:10px 13px;cursor:pointer;transition:.18s}
+.opt:hover{border-color:var(--green2);transform:translateY(-1px)}
+.opt.selected{background:var(--green);color:var(--cream);border-color:var(--green)}
+.colors{display:flex;gap:12px;flex-wrap:wrap}
+.color{width:40px;height:40px;border-radius:50%;border:3px solid var(--card);outline:1px solid var(--border);cursor:pointer;position:relative}
+.color.selected{outline:3px solid var(--green2);outline-offset:2px}
+.color.selected:after{content:"✓";position:absolute;inset:0;display:grid;place-items:center;color:white;font-weight:900;text-shadow:0 1px 3px #000}
+.predict{width:100%;margin-top:10px;border:0;border-radius:15px;padding:15px;background:var(--green);color:var(--cream);font-weight:800;cursor:pointer;transition:.2s}
+.predict:hover{background:var(--green2);transform:translateY(-1px)}
+.preview-card{text-align:center;display:flex;flex-direction:column;justify-content:center;min-height:540px}
+.phone{margin:0 auto 15px;width:min(210px,65vw)}
+.price-label{font-size:.82rem;color:var(--muted);font-weight:700}
+.price{font-size:clamp(2.2rem,7vw,3.1rem);font-weight:900;color:var(--green2);margin:4px 0}
+[data-theme="dark"] .price{color:var(--cream)}
+.range{margin:8px auto 16px;color:var(--muted);font-size:.9rem}
+.summary{display:flex;justify-content:center;gap:7px;flex-wrap:wrap}
+.chip{padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:99px;font-size:.75rem;color:var(--muted)}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:18px}
+.metric{padding:11px;background:var(--bg);border-radius:13px}
+.metric b{display:block;color:var(--green2)}
+.metric span{font-size:.72rem;color:var(--muted)}
+.note{font-size:.72rem;color:var(--muted);margin:16px 0 0;line-height:1.5}
+.error{min-height:20px;color:#dc2626;font-size:.82rem;margin-top:8px}
+.loading{display:none;color:var(--muted);font-size:.85rem}
+.loading.show{display:block}
+footer{text-align:center;color:var(--muted);font-size:.78rem;margin-top:30px}
+@media(max-width:760px){
+  .layout{grid-template-columns:1fr}
+  .preview-card{min-height:auto}
+  .phone{width:180px}
+  .hero{margin-top:15px}
+  .card{padding:18px}
+}
+@media(max-width:420px){
+  .opt{flex:1 1 calc(33.333% - 8px);text-align:center;padding:10px 5px;font-size:.82rem}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="logo">MobilePredict</div>
+  <button class="theme" id="theme" aria-label="Toggle theme">◐</button>
+</header>
+
+<section class="hero">
+  <span class="badge">ML POWERED</span>
+  <h1>Smart Mobile Price Predictor</h1>
+  <p>Select the phone specifications and get an estimated smartphone price instantly.</p>
+</section>
+
+<main class="layout">
+<section class="card">
+  <h2>Phone Specifications</h2>
+  <p class="sub">Select one option from each category.</p>
+
+  <div class="group">
+    <label>RAM</label>
+    <div class="options" id="ram"></div>
+  </div>
+
+  <div class="group">
+    <label>Storage</label>
+    <div class="options" id="storage"></div>
+  </div>
+
+  <div class="group">
+    <label>Battery</label>
+    <div class="options" id="battery"></div>
+  </div>
+
+  <div class="group">
+    <label>Camera</label>
+    <div class="options" id="camera"></div>
+  </div>
+
+  <div class="group">
+    <label>Colour</label>
+    <div class="colors" id="colors"></div>
+  </div>
+
+  <div class="error" id="error"></div>
+  <div class="loading" id="loading">Analyzing specifications...</div>
+  <button class="predict" id="predict">Predict Price →</button>
+</section>
+
+<section class="card preview-card">
+  <div class="phone">
+    <svg viewBox="0 0 180 330" width="100%" role="img" aria-label="Phone preview">
+      <defs>
+        <linearGradient id="screen" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#0B6B50"/>
+          <stop offset="1" stop-color="#043C2E"/>
+        </linearGradient>
+      </defs>
+      <rect id="phoneBody" x="18" y="5" width="144" height="320" rx="28" fill="#1c1c1e"/>
+      <rect x="26" y="13" width="128" height="304" rx="22" fill="url(#screen)"/>
+      <rect x="67" y="21" width="46" height="10" rx="5" fill="#07120f"/>
+      <circle cx="132" cy="48" r="12" fill="#07120f" opacity=".8"/>
+      <circle cx="132" cy="48" r="6" fill="#555"/>
+      <text x="90" y="145" text-anchor="middle" fill="#F8E7C9" font-size="12" font-weight="700" id="t1">8 GB RAM</text>
+      <text x="90" y="167" text-anchor="middle" fill="#F8E7C9" font-size="11" id="t2">256 GB · 5000 mAh</text>
+      <text x="90" y="189" text-anchor="middle" fill="#F8E7C9" font-size="11" id="t3">50 MP Camera</text>
+    </svg>
+  </div>
+
+  <div class="price-label">ESTIMATED PRICE</div>
+  <div class="price" id="price">₹ --</div>
+  <div class="range" id="range">Select specifications and predict</div>
+
+  <div class="summary">
+    <span class="chip" id="s1">8 GB RAM</span>
+    <span class="chip" id="s2">256 GB</span>
+    <span class="chip" id="s3">5000 mAh</span>
+    <span class="chip" id="s4">50 MP</span>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><b id="mae">—</b><span>Test MAE</span></div>
+    <div class="metric"><b id="r2">—</b><span>Test R²</span></div>
+  </div>
+  <p class="note">The prediction is an estimate based on the available training dataset and may differ from actual market prices.</p>
+</section>
+</main>
+
+<footer>MobilePredict · Smart price estimation using machine learning</footer>
+</div>
+
+<script>
+/* =========================================================
+   DATASET
+   Only the requested features are used:
+   RAM, Storage, Battery, Camera, Colour, Price
+   ========================================================= */
+const DATA=[
+[4,64,3500,12,"Black",7999],[4,64,4000,13,"Blue",8499],
+[4,128,4000,13,"Black",8999],[4,128,4500,16,"White",9999],
+[4,128,5000,48,"Green",10499],[4,128,5000,50,"Blue",10999],
+[4,128,6000,50,"Black",11999],[6,64,4000,16,"Red",10999],
+[6,128,4500,48,"Black",12999],[6,128,5000,50,"Blue",13999],
+[6,128,5000,64,"Green",14999],[6,256,4500,50,"White",15999],
+[6,256,5000,64,"Black",16999],[6,256,6000,108,"Blue",17999],
+[8,128,4500,48,"Black",15999],[8,128,5000,50,"Blue",17999],
+[8,128,5000,64,"Green",18999],[8,128,5500,50,"White",19999],
+[8,256,4500,50,"Black",20999],[8,256,5000,50,"Blue",22999],
+[8,256,5000,64,"Green",23999],[8,256,5000,108,"White",24999],
+[8,256,5500,108,"Black",26999],[8,512,5000,108,"Blue",29999],
+[8,512,5500,200,"Green",32999],[12,128,4500,50,"Black",24999],
+[12,256,5000,50,"Blue",29999],[12,256,5000,64,"White",32999],
+[12,256,5000,108,"Green",35999],[12,256,5500,108,"Black",37999],
+[12,512,5000,200,"Blue",44999],[12,512,5500,200,"White",49999],
+[16,256,5000,50,"Black",39999],[16,256,5500,108,"Blue",44999],
+[16,512,5000,108,"Green",49999],[16,512,6000,200,"White",59999],
+[16,512,6000,200,"Black",64999],[16,512,6500,200,"Blue",69999],
+[16,512,6500,200,"Green",74999],[16,512,6500,200,"White",79999],
+
+[4,64,4000,12,"Red",8999],[4,128,5000,48,"Red",10999],
+[4,128,6000,50,"Red",11999],[6,128,5000,50,"Red",13999],
+[6,256,5000,64,"Red",16999],[8,128,5000,50,"Red",17999],
+[8,256,5000,64,"Red",22999],[8,256,5500,108,"Red",26999],
+[8,512,5500,108,"Red",31999],[12,256,5000,108,"Red",34999],
+[12,512,5500,200,"Red",46999],[16,512,6000,200,"Red",69999],
+
+[4,64,3500,12,"Silver",8299],[4,128,4500,16,"Silver",9799],
+[6,128,5000,48,"Silver",12999],[6,256,5000,50,"Silver",15999],
+[8,128,5000,50,"Silver",17999],[8,256,5000,64,"Silver",22999],
+[8,256,5500,108,"Silver",26999],[8,512,5500,200,"Silver",32999],
+[12,256,5000,50,"Silver",29999],[12,256,5500,108,"Silver",36999],
+[12,512,5500,200,"Silver",45999],[16,512,6000,200,"Silver",69999],
+
+[4,64,4000,13,"Purple",8799],[4,128,4500,16,"Purple",9999],
+[6,128,5000,48,"Purple",13499],[6,256,5000,64,"Purple",16499],
+[8,128,5000,50,"Purple",18499],[8,256,5000,64,"Purple",23499],
+[8,256,5500,108,"Purple",27499],[8,512,5500,108,"Purple",31499],
+[12,256,5000,108,"Purple",35499],[12,512,5500,200,"Purple",45499],
+[16,512,6000,200,"Purple",69499],
+
+[4,64,4000,12,"Gold",8999],[4,128,4500,16,"Gold",10299],
+[6,128,5000,48,"Gold",13799],[6,256,5000,64,"Gold",16799],
+[8,128,5000,50,"Gold",18799],[8,256,5000,64,"Gold",23799],
+[8,256,5500,108,"Gold",27799],[8,512,5500,108,"Gold",31799],
+[12,256,5000,108,"Gold",35799],[12,512,5500,200,"Gold",45799],
+[16,512,6000,200,"Gold",69799],
+
+[4,128,4500,48,"Black",10999],[6,128,5000,50,"Black",13999],
+[6,256,5000,64,"Black",16999],[8,128,5000,50,"Black",17999],
+[8,256,5000,50,"Black",21999],[8,256,5000,108,"Black",25999],
+[8,512,5500,108,"Black",30999],[12,256,5000,50,"Black",29999],
+[12,256,5500,108,"Black",36999],[12,512,5500,200,"Black",45999],
+[16,512,6000,200,"Black",69999],
+
+[4,128,4500,48,"Blue",10999],[6,128,5000,50,"Blue",13999],
+[6,256,5000,64,"Blue",16999],[8,128,5000,50,"Blue",17999],
+[8,256,5000,50,"Blue",21999],[8,256,5000,108,"Blue",25999],
+[8,512,5500,108,"Blue",30999],[12,256,5000,50,"Blue",29999],
+[12,256,5500,108,"Blue",36999],[12,512,5500,200,"Blue",45999],
+[16,512,6000,200,"Blue",69999],
+
+[4,128,4500,48,"White",10999],[6,128,5000,50,"White",13999],
+[6,256,5000,64,"White",16999],[8,128,5000,50,"White",17999],
+[8,256,5000,50,"White",21999],[8,256,5000,108,"White",25999],
+[8,512,5500,108,"White",30999],[12,256,5000,50,"White",29999],
+[12,256,5500,108,"White",36999],[12,512,5500,200,"White",45999],
+[16,512,6000,200,"White",69999]
+];
+
+const colors={
+ Black:"#1c1c1e",Blue:"#2f6fed",White:"#eeeeee",
+ Green:"#2e9e6a",Red:"#d63b3b",Gold:"#d4b06a",
+ Silver:"#aeb6bd",Purple:"#7950b8"
+};
+
+const $=id=>document.getElementById(id);
+const avg=a=>a.reduce((s,v)=>s+v,0)/a.length;
+const mean=avg;
+const fmt=n=>"₹"+Math.round(n).toLocaleString("en-IN");
+
+const values={
+ ram:[4,6,8,12,16],
+ storage:[64,128,256,512],
+ battery:[3500,4000,4500,5000,5500,6000,6500],
+ camera:[12,16,48,50,64,108,200]
+};
+const selected={ram:8,storage:256,battery:5000,camera:50,color:"Black"};
+
+function renderOptions(id,list,key,suffix=""){
+  $(id).innerHTML=list.map(v=>
+    `<button class="opt ${selected[key]===v?"selected":""}" data-key="${key}" data-value="${v}">
+      ${v}${suffix}
+    </button>`).join("");
+  $(id).querySelectorAll(".opt").forEach(b=>{
+    b.onclick=()=>{
+      selected[key]=Number(b.dataset.value);
+      updateSelection();
+      updatePreview();
+    };
+  });
+}
+function renderColors(){
+  $("colors").innerHTML=Object.entries(colors).map(([name,c])=>
+    `<button class="color ${selected.color===name?"selected":""}" title="${name}" aria-label="${name}"
+      data-color="${name}" style="background:${c}"></button>`).join("");
+  $("colors").querySelectorAll(".color").forEach(b=>{
+    b.onclick=()=>{
+      selected.color=b.dataset.color;
+      renderColors();
+      updatePreview();
+    };
+  });
+}
+function updateSelection(){
+  document.querySelectorAll(".opt").forEach(b=>{
+    b.classList.toggle("selected",Number(b.dataset.value)===selected[b.dataset.key]);
+  });
+}
+function updatePreview(){
+  $("phoneBody").setAttribute("fill",colors[selected.color]);
+  $("t1").textContent=selected.ram+" GB RAM";
+  $("t2").textContent=selected.storage+" GB · "+selected.battery+" mAh";
+  $("t3").textContent=selected.camera+" MP Camera";
+  $("s1").textContent=selected.ram+" GB RAM";
+  $("s2").textContent=selected.storage+" GB";
+  $("s3").textContent=selected.battery+" mAh";
+  $("s4").textContent=selected.camera+" MP";
+}
+
+/* One-hot encode colour + standardized numeric features. */
+const baseFeatures=["ram","storage","battery","camera"];
+const colourList=Object.keys(colors);
+
+function makeFeature(row){
+  return [
+    row[0],row[1],row[2],row[3],
+    ...colourList.map(c=>c===row[4]?1:0)
+  ];
+}
+const X=DATA.map(makeFeature), y=DATA.map(r=>r[5]);
+
+function transpose(a){return a[0].map((_,i)=>a.map(r=>r[i]));}
+function matMul(A,B){
+  return A.map(r=>B[0].map((_,j)=>r.reduce((s,v,i)=>s+v*B[i][j],0)));
+}
+function solve(A,b){
+  const n=A.length, M=A.map((r,i)=>[...r,b[i]]);
+  for(let i=0;i<n;i++){
+    let pivot=i;
+    for(let r=i+1;r<n;r++) if(Math.abs(M[r][i])>Math.abs(M[pivot][i])) pivot=r;
+    [M[i],M[pivot]]=[M[pivot],M[i]];
+    const div=M[i][i]||1e-10;
+    for(let j=i;j<=n;j++) M[i][j]/=div;
+    for(let r=0;r<n;r++){
+      if(r===i) continue;
+      const f=M[r][i];
+      for(let j=i;j<=n;j++) M[r][j]-=f*M[i][j];
+    }
+  }
+  return M.map(r=>r[n]);
+}
+function fit(rows,lambda=.8){
+  const raw=rows.map(makeFeature), target=rows.map(r=>r[5]);
+  const cols=raw[0].length;
+  const mu=Array.from({length:cols},(_,j)=>avg(raw.map(r=>r[j])));
+  const sd=Array.from({length:cols},(_,j)=>Math.sqrt(avg(raw.map(r=>(r[j]-mu[j])**2)))||1);
+  const Z=raw.map(r=>r.map((v,j)=>(v-mu[j])/sd[j]));
+  const A=Array.from({length:cols},(_,i)=>
+    Array.from({length:cols},(_,j)=>Z.reduce((s,r,k)=>s+r[i]*r[j],0)+(i===j?lambda:0))
+  );
+  const b=Z.map((_,j)=>0);
+  const rhs=Array.from({length:cols},(_,j)=>Z.reduce((s,r,k)=>s+r[j]*(target[k]-avg(target)),0));
+  const w=solve(A,rhs);
+  return {mu,sd,w,ym:avg(target)};
+}
+function predict(model,row){
+  const raw=makeFeature([...row,0]);
+  const z=raw.map((v,j)=>(v-model.mu[j])/model.sd[j]);
+  const p=model.ym+z.reduce((s,v,j)=>s+v*model.w[j],0);
+  return Math.max(5000,p);
+}
+
+/* deterministic 80/20 test split */
+const train=DATA.filter((_,i)=>i%5!==0);
+const test=DATA.filter((_,i)=>i%5===0);
+const model=fit(train);
+const errors=test.map(r=>r[5]-predict(model,r));
+const MAE=avg(errors.map(Math.abs));
+const testMean=avg(test.map(r=>r[5]));
+const R2=1-errors.reduce((s,e)=>s+e*e,0)/
+  test.reduce((s,r)=>s+(r[5]-testMean)**2,0);
+
+$("mae").textContent=fmt(MAE);
+$("r2").textContent=R2.toFixed(2);
+
+function predictSelected(){
+  $("error").textContent="";
+  $("loading").classList.add("show");
+  $("predict").disabled=true;
+
+  setTimeout(()=>{
+    try{
+      const row=[
+        selected.ram,selected.storage,selected.battery,
+        selected.camera,selected.color
+      ];
+      const p=predict(model,row);
+      const low=Math.max(5000,p-MAE);
+      const high=p+MAE;
+
+      animatePrice(p);
+      $("range").textContent=`Expected range: ${fmt(low)} – ${fmt(high)}`;
+    }catch(e){
+      $("error").textContent="Unable to calculate the price. Please try again.";
+    }finally{
+      $("loading").classList.remove("show");
+      $("predict").disabled=false;
+    }
+  },350);
+}
+function animatePrice(target){
+  const start=Number($("price").dataset.value||0);
+  const t0=performance.now(),duration=550;
+  function frame(t){
+    const k=Math.min(1,(t-t0)/duration);
+    const eased=1-Math.pow(1-k,3);
+    const value=start+(target-start)*eased;
+    $("price").textContent=fmt(value);
+    if(k<1) requestAnimationFrame(frame);
+    else $("price").dataset.value=target;
+  }
+  requestAnimationFrame(frame);
+}
+
+$("predict").onclick=predictSelected;
+$("theme").onclick=()=>{
+  const root=document.documentElement;
+  const dark=root.getAttribute("data-theme")==="dark";
+  root.setAttribute("data-theme",dark?"light":"dark");
+};
+
+renderOptions("ram",values.ram,"ram"," GB");
+renderOptions("storage",values.storage,"storage"," GB");
+renderOptions("battery",values.battery,"battery"," mAh");
+renderOptions("camera",values.camera,"camera"," MP");
+renderColors();
+updatePreview();
+</script>
+</body>
+</html>
